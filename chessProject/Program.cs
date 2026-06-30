@@ -132,6 +132,15 @@ namespace System
                                     { null, new Rook(true, true), new Knight(true), new Bishop(true), new Queen(true),
                                             new King(true, true), new Bishop(true), new Knight(true), new Rook(true, true) } };
 
+            for (int i = 1; i < board.GetLength(0); i++)
+            {
+                for (int j = 1; j < board.GetLength(1); j++)
+                {
+                    if (board[i, j] != null)
+                        board[i, j].setMathmaticFuncsRunner(this);
+                }
+            }
+
             return board;
         }
         public void printBoard(ChessPiece[,] board) //printBoard board
@@ -505,6 +514,8 @@ namespace System
         #endregion calculation of diraction by the difrence beteween the location and destenation
         public bool isMoveLegal(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation, bool isNeededToChekIfKingThreatenedAfterMovement) // will have more conditions
         {
+            this.location = location;
+            this.toLocation = toLocation;
 
             if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] != null) &&
                 playBoard[location.getNumberLocation(), location.getLetterLocation()].getIsWhite() == getIsWhiteTurn() &&
@@ -573,72 +584,69 @@ namespace System
         }
         public bool ChekIsClearPath(Location location, Location toLocation, ChessPiece[,] playBoard)
         {
-            if (lengthOfHorizontalVector() > 1)
+            if ((isVerticalVectorPointingDown() == false) && lengthOfHorizontalVector() == 0) //up up
             {
-                if ((isVerticalVectorPointingDown() == false) && lengthOfHorizontalVector() == 0) //up up
+                for (int i = (location.getNumberLocation() - 1); i > toLocation.getNumberLocation(); i--)
                 {
-                    for (int i = (location.getNumberLocation() - 1); i > toLocation.getNumberLocation(); i--)
-                    {
-                        if (playBoard[i, location.getLetterLocation()] != null)
-                            return false;
-                    }
+                    if (playBoard[i, location.getLetterLocation()] != null)
+                        return false;
                 }
-                else if (isVerticalVectorPointingDown() && lengthOfHorizontalVector() == 0) //down down
+            }
+            else if (isVerticalVectorPointingDown() && lengthOfHorizontalVector() == 0) //down down
+            {
+                for (int i = (location.getNumberLocation() + 1); i < toLocation.getNumberLocation(); i++)
                 {
-                    for (int i = (location.getNumberLocation() + 1); i < toLocation.getNumberLocation(); i++)
-                    {
-                        if (playBoard[i, location.getLetterLocation()] != null)
-                            return false;
-                    }
+                    if (playBoard[i, location.getLetterLocation()] != null)
+                        return false;
                 }
-                else if (lengthOfVerticalVector() == 0 && isHorizontalVectorToTheRight()) //right right
+            }
+            else if (lengthOfVerticalVector() == 0 && isHorizontalVectorToTheRight()) //right right
+            {
+                for (int i = (location.getLetterLocation() + 1); i < toLocation.getLetterLocation(); i++)
                 {
-                    for (int i = (location.getLetterLocation() + 1); i < toLocation.getLetterLocation(); i++)
-                    {
-                        if (playBoard[location.getNumberLocation(), i] != null)
-                            return false;
-                    }
+                    if (playBoard[location.getNumberLocation(), i] != null)
+                        return false;
                 }
-                else if (lengthOfVerticalVector() == 0 && (isHorizontalVectorToTheRight() == false)) //left left
+            }
+            else if (lengthOfVerticalVector() == 0 && (isHorizontalVectorToTheRight() == false)) //left left
+            {
+                for (int i = (location.getLetterLocation() - 1); i > toLocation.getLetterLocation(); i--)
                 {
-                    for (int i = (location.getLetterLocation() - 1); i > toLocation.getLetterLocation(); i--)
-                    {
-                        if (playBoard[location.getNumberLocation(), i] != null)
-                            return false;
-                    }
+                    if (playBoard[location.getNumberLocation(), i] != null)
+                        return false;
                 }
-                else if ((isVerticalVectorPointingDown() == false) && (isHorizontalVectorToTheRight() == false))//up left
+            }
+            else if ((isVerticalVectorPointingDown() == false) && (isHorizontalVectorToTheRight() == false))//up left
+            {
+                for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() - 1); (i > toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i--, j--)
                 {
-                    for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() - 1); (i > toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i--, j--)
-                    {
-                        if (playBoard[i, j] != null)
-                            return false;
-                    }
+                    if (playBoard[i, j] != null)
+                        return false;
                 }
-                else if ((isVerticalVectorPointingDown() == false) && isHorizontalVectorToTheRight())//up right
+            }
+            else if ((isVerticalVectorPointingDown() == false) && isHorizontalVectorToTheRight())//up right
+            {
+                for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() + 1); (i > toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i--, j++)
                 {
-                    for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() + 1); (i > toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i--, j++)
-                    {
-                        if (playBoard[i, j] != null)
-                            return false;
-                    }
+                    if (playBoard[i, j] != null)
+                        return false;
+                }
 
-                }
-                else if (isVerticalVectorPointingDown() && (isHorizontalVectorToTheRight() == false))//down left
+            }
+            else if (isVerticalVectorPointingDown() && (isHorizontalVectorToTheRight() == false))//down left
+            {
+                for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() - 1); (i < toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i++, j--)
                 {
-                    for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() - 1); (i < toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i++, j--)
-                    {
-                        if (playBoard[i, j] != null)
-                            return false;
-                    }
+                    if (playBoard[i, j] != null)
+                        return false;
                 }
-                else if (isVerticalVectorPointingDown() && isHorizontalVectorToTheRight())//down right
+            }
+            else if (isVerticalVectorPointingDown() && isHorizontalVectorToTheRight())//down right
+            {
+                for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() + 1); (i < toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i++, j++)
                 {
-                    for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() + 1); (i < toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i++, j++)
-                    {
-                        if (playBoard[i, j] != null)
-                            return false;
-                    }
+                    if (playBoard[i, j] != null)
+                        return false;
                 }
             }
             return true;
@@ -647,7 +655,7 @@ namespace System
         {
             bool result = true;
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null)
-                result = (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getIsWhite() ? true : false);
+                result = (playBoard[this.location.getNumberLocation(), this.location.getLetterLocation()].getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getIsWhite() ? true : false);
 
             return result;
         }
@@ -713,6 +721,8 @@ namespace System
                         changeTurn();
                         if (isMoveLegal(potentialTrheatingPieceLocation, placeLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation, false) == true)
                         {//if threatend
+                            playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = chessPieceHolder;
+                            changeTurn();
                             return true;
                         }
                         playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = chessPieceHolder;
@@ -977,6 +987,8 @@ namespace System
         #endregion chess piece realated
         public ChessGame getMathmaticFuncsRunner()
         { return MathmaticFuncsRunner; }
+        public bool setMathmaticFuncsRunner(ChessGame game)
+        { MathmaticFuncsRunner = game; return true; }
     }
     class King : ChessPiece
     {
