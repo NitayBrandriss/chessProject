@@ -182,7 +182,7 @@ namespace System
                 {
                     if (playBoard[i, j] is ChessPiece)
                     {
-                        char pieceName = playBoard[i, j].ToString()[2];
+                        char pieceName = playBoard[i, j].getName();
                         switch (pieceName)
                         {
                             case 'K':
@@ -217,7 +217,7 @@ namespace System
                         result += "nl,";
                 }
             }
-            result += getIsWhiteTurn() ? "BlackTurn?" : "WhiteTurn?";
+            result += getIsWhiteTurn() ? "WhiteTurn?" : "BlackTurn?";
             return result;
         }
         public string getBoardString()
@@ -356,7 +356,10 @@ namespace System
         { fiftyMovesRuleCountTo100moves++; }
         public void setToZeroFiftyMovesRuleCount(ChessPiece[,] playBoard, Location location, Location toLocation)
         {
-            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) || playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null)
+            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) || playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null ||
+                (playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn &&
+                playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null &&
+                playBoard[location.getNumberLocation(), toLocation.getLetterLocation()] != null))
                 fiftyMovesRuleCountTo100moves = 0;
         }
         #endregion 50 moves related funcs
@@ -409,6 +412,8 @@ namespace System
                     }
                 }
             }
+            if (knightCount > 0 && (blacBishopCount + WhiteBishopCount) > 0)
+                return false;
             return true;
         }
         public bool isStalemateDraw(ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
@@ -519,7 +524,7 @@ namespace System
 
             if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] != null) &&
                 playBoard[location.getNumberLocation(), location.getLetterLocation()].getIsWhite() == getIsWhiteTurn() &&
-                location != toLocation &&
+                (location.getNumberLocation() != toLocation.getNumberLocation() || location.getLetterLocation() != toLocation.getLetterLocation()) &&
                 playBoard[location.getNumberLocation(), location.getLetterLocation()].ChekMovmentValid(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) &&
                 ChekMovementEatingRightColor(toLocation, playBoard) &&
                 ChekIsClearPath(location, toLocation, playBoard) &&
@@ -558,10 +563,12 @@ namespace System
         }
         public bool isCastlingValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            Location castlingKingMidMovementSquare = new Location(toLocation.getNumberLocation(), toLocation.getLetterLocation() + (isHorizontalVectorToTheRight() ? 1 : -1));
+            Location castlingKingMidMovementSquare = new Location(location.getNumberLocation(), location.getLetterLocation() + (isHorizontalVectorToTheRight() ? 1 : -1));
+            Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1);
             if ((isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
                 (isThreatenedPlace(toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
-                (isThreatenedPlace(castlingKingMidMovementSquare, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false))
+                (isThreatenedPlace(castlingKingMidMovementSquare, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
+                (ChekIsClearPath(location, CastlingRookLocation, playBoard) == true))
             {
                 if ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] is Rook) &&
                     ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] as Rook).getIsFirstTurn()))
@@ -765,7 +772,7 @@ namespace System
                 Console.WriteLine(" checkmate!");
                 endGame = true;
             }
-            if (isDraw(boardString, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == true)
+            if (endGame == false && isDraw(boardString, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == true)
             {
                 Console.WriteLine(" its draw!");
                 endGame = true;
@@ -1079,7 +1086,10 @@ namespace System
         {
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) //normal mooveing + en passant
             {
-                if ((getMathmaticFuncsRunner().lengthOfVerticalVector() <= (getIsFirstTurn() ? 2 : 1)) && isValidVerticalDiraction() && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 0)
+                if (isValidVerticalDiraction() && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 0 &&
+                    ((getMathmaticFuncsRunner().lengthOfVerticalVector() == 1) ||
+                     (getIsFirstTurn() && getMathmaticFuncsRunner().lengthOfVerticalVector() == 2 &&
+                      location.getNumberLocation() == (getIsWhite() ? 7 : 2))))
                 {
                     return true;
                 }
@@ -1111,35 +1121,38 @@ namespace System
         public void promotion(Location toLocation, ChessPiece[,] playBoard)
         {
             bool PromotedPawnColor = this.getIsWhite();
-            Console.WriteLine("your pawn crossed the board" +
-                "\npress Q to promote it to a Queen" +
-                "\npress R to promote it to a Rook" +
-                "\npress B to promote it to a Bishop" +
-                "\npress N to promote it to a knight");
-            string input = Console.ReadLine();
-            input = input.Trim();
-            input = input.ToUpper();
-            if (inputChek(input))
+            bool toEndLoop = false;
+            do
             {
-                switch (input[0])
+                Console.WriteLine("your pawn crossed the board" +
+                    "\npress Q to promote it to a Queen" +
+                    "\npress R to promote it to a Rook" +
+                    "\npress B to promote it to a Bishop" +
+                    "\npress N to promote it to a knight");
+                string input = Console.ReadLine();
+                input = input.Trim();
+                input = input.ToUpper();
+                if (inputChek(input))
                 {
-                    case 'Q':
-                        playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Queen(PromotedPawnColor);
-                        break;
-                    case 'R':
-                        playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Rook(PromotedPawnColor, false);
-                        break;
-                    case 'B':
-                        playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Bishop(PromotedPawnColor);
-                        break;
-                    case 'N':
-                        playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Knight(PromotedPawnColor);
-                        break;
+                    switch (input[0])
+                    {
+                        case 'Q':
+                            playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Queen(PromotedPawnColor);
+                            break;
+                        case 'R':
+                            playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Rook(PromotedPawnColor, false);
+                            break;
+                        case 'B':
+                            playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Bishop(PromotedPawnColor);
+                            break;
+                        case 'N':
+                            playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Knight(PromotedPawnColor);
+                            break;
+                    }
+                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setMathmaticFuncsRunner(getMathmaticFuncsRunner());
+                    toEndLoop = true;
                 }
-                playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setMathmaticFuncsRunner(getMathmaticFuncsRunner());
-            }
-            else
-            { this.promotion(toLocation, playBoard); }
+            } while (!toEndLoop);
 
         }
         public bool inputChek(string input)
