@@ -1136,6 +1136,7 @@ namespace System
                         playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Knight(PromotedPawnColor);
                         break;
                 }
+                playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setMathmaticFuncsRunner(getMathmaticFuncsRunner());
             }
             else
             { this.promotion(toLocation, playBoard); }
