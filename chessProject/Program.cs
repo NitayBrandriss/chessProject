@@ -22,11 +22,11 @@ namespace System
         Location BlackKingLocation = new Location(1, 5), WhiteKingLocation = new Location(8, 5);
         int fiftyMovesRuleCountTo100moves;
         string boardString = "";
-        Location location, toLocation;
+        Location location = new Location(1, 1), toLocation = new Location(1, 1);
         public void startGame()
         {
             string input;
-            ChessPiece[,] board = createBoard();
+            ChessPiece?[,] board = createBoard();
             printBoard(board);
             do
             {
@@ -36,7 +36,7 @@ namespace System
                 {
                     Console.WriteLine("its {0} turn. please enter the curr LETTER of row and curr NUMBER of col and, and the new LETTER of row and new NUMBER of col." +
                     "\nYou can also ask the opponent agree to a DRAW", isWhiteTurn ? "WHITE" : "BLACK");
-                    input = Console.ReadLine();
+                    input = Console.ReadLine() ?? "";
                     input = input.Trim();
                     input = input.ToUpper();
                 }
@@ -88,7 +88,7 @@ namespace System
                     do
                     {
                         Console.WriteLine("{0} do you agree to a DRAW? \npress Y to AGREE or N to DECLINE.", isWhiteTurn ? "BLACK" : "WHITE");
-                        YorN = Console.ReadLine();
+                        YorN = Console.ReadLine() ?? "";
                         YorN = YorN.Trim().ToUpper();
                         switch (YorN)
                         {
@@ -118,9 +118,9 @@ namespace System
 
         }
         #region board related funcs
-        public ChessPiece[,] createBoard() //create strting board
+        public ChessPiece?[,] createBoard() //create strting board
         {
-            ChessPiece[,] board = { { null,null, null, null, null, null, null, null, null },
+            ChessPiece?[,] board = { { null,null, null, null, null, null, null, null, null },
                                     { null, new Rook(false,true), new Knight(false), new Bishop(false), new Queen(false),
                                             new King(false,true), new Bishop(false), new Knight(false), new Rook(false, true) },
                                     { null, new Pawn(false), new Pawn(false), new Pawn(false), new Pawn(false),new Pawn(false), new Pawn(false), new Pawn(false), new Pawn(false) },
@@ -137,13 +137,13 @@ namespace System
                 for (int j = 1; j < board.GetLength(1); j++)
                 {
                     if (board[i, j] != null)
-                        board[i, j].setMathmaticFuncsRunner(this);
+                        board[i, j]!.setMathmaticFuncsRunner(this);
                 }
             }
 
             return board;
         }
-        public void printBoard(ChessPiece[,] board) //printBoard board
+        public void printBoard(ChessPiece?[,] board) //printBoard board
         {
             int BoardNumbers = 8, BoardLetterUniCode = 65;
             for (int i = 0; i < board.GetLength(0); i++)
@@ -172,7 +172,7 @@ namespace System
             }
             Console.WriteLine();
         }
-        public string makeBoardString(ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public string makeBoardString(ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             string result = "";
 
@@ -182,20 +182,22 @@ namespace System
                 {
                     if (playBoard[i, j] is ChessPiece)
                     {
-                        char pieceName = playBoard[i, j].getName();
+                        char pieceName = playBoard[i, j]!.getName();
                         switch (pieceName)
                         {
                             case 'K':
-                                result += playBoard[i, j].ToString();
-                                result += (playBoard[i, j] as King).getIsFirstTurn() ? "t," : "f,";
+                                result += playBoard[i, j]!.ToString();
+                                if (playBoard[i, j] is King king)
+                                    result += king.getIsFirstTurn() ? "t," : "f,";
                                 break;
                             case 'R':
-                                result += playBoard[i, j].ToString();
-                                result += (playBoard[i, j] as Rook).getIsFirstTurn() ? "t," : "f,";
+                                result += playBoard[i, j]!.ToString();
+                                if (playBoard[i, j] is Rook rook)
+                                    result += rook.getIsFirstTurn() ? "t," : "f,";
                                 break;
                             case 'P':
-                                result += playBoard[i, j].ToString();
-                                if ((i == (playBoard[i, j].getIsWhite() ? 4 : 5)) &&  //eater side //En Passant Position
+                                result += playBoard[i, j]!.ToString();
+                                if ((i == (playBoard[i, j]!.getIsWhite() ? 4 : 5)) &&  //eater side //En Passant Position
                                     (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] is Pawn) && //eaten side
                                     (lastMoveLengthOfVerticalVector() == 2) &&
                                     lastMoveFinalLocation.getNumberLocation() == i &&
@@ -208,7 +210,7 @@ namespace System
 
                                 break;
                             default:
-                                result += playBoard[i, j].ToString() + ",";
+                                result += playBoard[i, j]!.ToString() + ",";
                                 break;
                         }
                     }
@@ -226,7 +228,7 @@ namespace System
         { boardString = str; return true; }
         #endregion board related funcs
         #region check and draw
-        public bool isDraw(string boardString, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocationn)
+        public bool isDraw(string boardString, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocationn)
         {
             if (isStalemateDraw(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation))
             {
@@ -247,7 +249,7 @@ namespace System
 
             return false;
         }
-        public bool isThreeFoldRepetitionDraw(string boardString, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isThreeFoldRepetitionDraw(string boardString, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             if (isThreeFoldRepetitionOption(boardString, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == true)
             {
@@ -258,7 +260,7 @@ namespace System
                 do
                 {
                     Console.WriteLine("do you want to claim a DRAW? \npress Y to AGREE or N to DECLINE.");
-                    YorN = Console.ReadLine();
+                    YorN = Console.ReadLine() ?? "";
                     YorN = YorN.Trim().ToUpper();
                     switch (YorN)
                     {
@@ -283,7 +285,7 @@ namespace System
             }
             return false;
         }
-        public bool isThreeFoldRepetitionOption(string boardString, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isThreeFoldRepetitionOption(string boardString, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             string newBordString = "";
             newBordString = makeBoardString(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
@@ -314,7 +316,7 @@ namespace System
                 do
                 {
                     Console.WriteLine("do you want to claim a DRAW? \npress Y to AGREE or N to DECLINE.");
-                    YorN = Console.ReadLine();
+                    YorN = Console.ReadLine() ?? "";
                     YorN = YorN.Trim().ToUpper();
                     switch (YorN)
                     {
@@ -346,7 +348,7 @@ namespace System
                 return true;
             return false;
         }
-        public bool update50MovesRuleCount(ChessPiece[,] playBoard, Location location, Location toLocation)
+        public bool update50MovesRuleCount(ChessPiece?[,] playBoard, Location location, Location toLocation)
         {
             addOneToFiftyMovesRuleCount();
             setToZeroFiftyMovesRuleCount(playBoard, location, toLocation);
@@ -354,7 +356,7 @@ namespace System
         }
         public void addOneToFiftyMovesRuleCount()
         { fiftyMovesRuleCountTo100moves++; }
-        public void setToZeroFiftyMovesRuleCount(ChessPiece[,] playBoard, Location location, Location toLocation)
+        public void setToZeroFiftyMovesRuleCount(ChessPiece?[,] playBoard, Location location, Location toLocation)
         {
             if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) || playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null ||
                 (playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn &&
@@ -363,7 +365,7 @@ namespace System
                 fiftyMovesRuleCountTo100moves = 0;
         }
         #endregion 50 moves related funcs
-        public bool isDeadPositionDraw(ChessPiece[,] playBoard)
+        public bool isDeadPositionDraw(ChessPiece?[,] playBoard)
         {
             int piecesCount = 0, kingCount = 0, knightCount = 0, blacBishopCount = 0, WhiteBishopCount = 0, BishopSquerColor = -1;
             for (int i = 1; i < playBoard.GetLength(0); i++)
@@ -376,7 +378,7 @@ namespace System
                         if (piecesCount > 4)
                             return false;
                         char pieceName = ' ';
-                        pieceName = playBoard[i, j].getName();
+                        pieceName = playBoard[i, j]!.getName();
                         switch (pieceName)
                         {
                             case 'K':
@@ -388,7 +390,7 @@ namespace System
                                     return false;
                                 break;
                             case 'B':
-                                if (playBoard[i, j].getIsWhite())
+                                if (playBoard[i, j]!.getIsWhite())
                                 {
                                     WhiteBishopCount++;
                                     if (WhiteBishopCount > 1)
@@ -416,7 +418,7 @@ namespace System
                 return false;
             return true;
         }
-        public bool isStalemateDraw(ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isStalemateDraw(ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             bool condition1, temp = false;
             condition1 = (isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == true);
@@ -437,7 +439,7 @@ namespace System
             }
             return true;
         }
-        public bool isChekmate(ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isChekmate(ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             bool condition1;
             condition1 = (isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == true);
@@ -456,7 +458,7 @@ namespace System
             }
             return true;
         }
-        public bool isSomeOneIsAbleToMove(Location location, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isSomeOneIsAbleToMove(Location location, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             if (playBoard[location.getNumberLocation(), location.getLetterLocation()] != null)
             {
@@ -517,15 +519,18 @@ namespace System
         }
         #endregion memo
         #endregion calculation of diraction by the difrence beteween the location and destenation
-        public bool isMoveLegal(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation, bool isNeededToChekIfKingThreatenedAfterMovement) // will have more conditions
+        public bool isMoveLegal(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation, bool isNeededToChekIfKingThreatenedAfterMovement) // will have more conditions
         {
             this.location = location;
             this.toLocation = toLocation;
 
-            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] != null) &&
-                playBoard[location.getNumberLocation(), location.getLetterLocation()].getIsWhite() == getIsWhiteTurn() &&
+            ChessPiece? movingPiece = playBoard[location.getNumberLocation(), location.getLetterLocation()];
+            if (movingPiece == null)
+                return false;
+
+            if (movingPiece.getIsWhite() == getIsWhiteTurn() &&
                 (location.getNumberLocation() != toLocation.getNumberLocation() || location.getLetterLocation() != toLocation.getLetterLocation()) &&
-                playBoard[location.getNumberLocation(), location.getLetterLocation()].ChekMovmentValid(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) &&
+                movingPiece.ChekMovmentValid(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) &&
                 ChekMovementEatingRightColor(toLocation, playBoard) &&
                 ChekIsClearPath(location, toLocation, playBoard) &&
                 (isNeededToChekIfKingThreatenedAfterMovement ? ((isKingThreatenedAfterMovement(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation)) == false) : true))
@@ -541,19 +546,19 @@ namespace System
             }
             return false;
         }
-        public bool isItEnPassant(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public bool isItEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) && (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) && ((lengthOfHorizontalVector()) == 1))
                 return true;
             return false;
         }
-        public void doTheEnPassant(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public void doTheEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             update50MovesRuleCount(playBoard, location, toLocation);
             doTheMove(location, toLocation, playBoard);
             playBoard[location.getNumberLocation(), toLocation.getLetterLocation()] = null;
         }
-        public bool isItCastling(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public bool isItCastling(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             if (playBoard[location.getNumberLocation(), location.getLetterLocation()] is King && (lengthOfHorizontalVector()) == 2)
             {
@@ -561,7 +566,7 @@ namespace System
             }
             return false;
         }
-        public bool isCastlingValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isCastlingValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             Location castlingKingMidMovementSquare = new Location(location.getNumberLocation(), location.getLetterLocation() + (isHorizontalVectorToTheRight() ? 1 : -1));
             Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1);
@@ -570,8 +575,8 @@ namespace System
                 (isThreatenedPlace(castlingKingMidMovementSquare, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
                 (ChekIsClearPath(location, CastlingRookLocation, playBoard) == true))
             {
-                if ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] is Rook) &&
-                    ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] as Rook).getIsFirstTurn()))
+                if ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] is Rook castlingRook) &&
+                    castlingRook.getIsFirstTurn())
                 {
                     return true;
                 }
@@ -580,16 +585,17 @@ namespace System
             }
             else return false;
         }
-        public void doTheCastling(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public void doTheCastling(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1);
             Location CastlingRookDestination = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 6 : 4);
             update50MovesRuleCount(playBoard, location, toLocation);
             doTheMove(location, toLocation, playBoard);
             doTheMove(CastlingRookLocation, CastlingRookDestination, playBoard);
-            (playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 6 : 4] as Rook).setIsFirstTurn(false);
+            if (playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 6 : 4] is Rook castledRook)
+                castledRook.setIsFirstTurn(false);
         }
-        public bool ChekIsClearPath(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public bool ChekIsClearPath(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             if ((isVerticalVectorPointingDown() == false) && lengthOfHorizontalVector() == 0) //up up
             {
@@ -658,15 +664,15 @@ namespace System
             }
             return true;
         }
-        public bool ChekMovementEatingRightColor(Location toLocation, ChessPiece[,] playBoard) //no knibalism
+        public bool ChekMovementEatingRightColor(Location toLocation, ChessPiece?[,] playBoard) //no knibalism
         {
             bool result = true;
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null)
-                result = (playBoard[this.location.getNumberLocation(), this.location.getLetterLocation()].getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getIsWhite() ? true : false);
+                result = (playBoard[this.location.getNumberLocation(), this.location.getLetterLocation()]!.getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()]!.getIsWhite() ? true : false);
 
             return result;
         }
-        public void doTheMove(Location location, Location toLocation, ChessPiece[,] playBoard)
+        public void doTheMove(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
             playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = playBoard[location.getNumberLocation(), location.getLetterLocation()];
             playBoard[location.getNumberLocation(), location.getLetterLocation()] = null;
@@ -674,31 +680,32 @@ namespace System
         }
         #endregion move ligalitty
         #region threat related funcs
-        public bool isKingThreatenedAfterMovement(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isKingThreatenedAfterMovement(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             bool result = false;
-            ChessPiece movingPieceHolder = playBoard[location.getNumberLocation(), location.getLetterLocation()]; //move the piece and chek the king
+            ChessPiece? movingPieceHolder = playBoard[location.getNumberLocation(), location.getLetterLocation()]; //move the piece and chek the king
             {
                 playBoard[location.getNumberLocation(), location.getLetterLocation()] = null;//last change
                 if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null)
                     playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new ChessPiece(getIsWhiteTurn());
                 else
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setIsWhite(getIsWhiteTurn());
+                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()]!.setIsWhite(getIsWhiteTurn());
             }
             result = isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
             {
                 playBoard[location.getNumberLocation(), location.getLetterLocation()] = movingPieceHolder;
-                if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getName() == 'T')
+                ChessPiece? simulatedDest = playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()];
+                if (simulatedDest!.getName() == 'T')
                     playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = null;
                 else
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setIsWhite(!(getIsWhiteTurn()));
+                    simulatedDest.setIsWhite(!(getIsWhiteTurn()));
             }
             return result;
         }
-        public bool isKingThreatened(ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isKingThreatened(ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             bool result;
-            ChessPiece KingObgectHolder;
+            ChessPiece? KingObgectHolder;
             Location KingLocation = thisTurnColorKingLocation();
             KingObgectHolder = playBoard[KingLocation.getNumberLocation(), KingLocation.getLetterLocation()];
             playBoard[KingLocation.getNumberLocation(), KingLocation.getLetterLocation()] = null;
@@ -707,23 +714,23 @@ namespace System
 
             return result;
         }
-        public bool isThreatenedPlace(Location placeLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public bool isThreatenedPlace(Location placeLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             for (int i = 1; i < playBoard.GetLength(0); i++)
             {
                 for (int j = 1; j < playBoard.GetLength(1); j++)
                 {
-                    if ((playBoard[i, j] != null) && (playBoard[i, j].getIsWhite() != getIsWhiteTurn()))
+                    if ((playBoard[i, j] != null) && (playBoard[i, j]!.getIsWhite() != getIsWhiteTurn()))
                     {
                         Location potentialTrheatingPieceLocation = new Location(i, j);
-                        ChessPiece chessPieceHolder = playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()];
+                        ChessPiece? chessPieceHolder = playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()];
                         if (playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] == null)
                         {
                             playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = new ChessPiece(getIsWhiteTurn());
                         }
                         else
                         {
-                            playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()].setIsWhite(getIsWhiteTurn());
+                            playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()]!.setIsWhite(getIsWhiteTurn());
                         }
                         changeTurn();
                         if (isMoveLegal(potentialTrheatingPieceLocation, placeLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation, false) == true)
@@ -755,11 +762,11 @@ namespace System
             }
         }
         #endregion threat related funcs
-        public void afterTurnCheksAndEffects(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public void afterTurnCheksAndEffects(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] is Pawn)
+            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] is Pawn promotedPawn)
             {
-                (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] as Pawn).isPromotionOption(toLocation, playBoard);
+                promotedPawn.isPromotionOption(toLocation, playBoard);
                 printBoard(playBoard);
             }
             remmemberLastMove(location, toLocation);
@@ -778,11 +785,12 @@ namespace System
                 endGame = true;
             }
         }
-        public void kingLocationTraceUpdate(Location toLocation, ChessPiece[,] playBoard)
+        public void kingLocationTraceUpdate(Location toLocation, ChessPiece?[,] playBoard)
         {
-            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] is King)
+            ChessPiece? kingPiece = playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()];
+            if (kingPiece is King movedKing)
             {
-                switch (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getIsWhite())
+                switch (movedKing.getIsWhite())
                 {
                     case true:
                         {
@@ -927,18 +935,19 @@ namespace System
         {
             return isWhiteTurn;
         }
-        public void endFirstTurn(Location toLocation, ChessPiece[,] playBoard)
+        public void endFirstTurn(Location toLocation, ChessPiece?[,] playBoard)
         {
-            switch (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].getName())
+            ChessPiece? piece = playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()];
+            switch (piece?.getName())
             {
                 case 'K':
-                    (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] as King).setIsFirstTurn(false);
+                    if (piece is King king) king.setIsFirstTurn(false);
                     break;
                 case 'R':
-                    (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] as Rook).setIsFirstTurn(false);
+                    if (piece is Rook rook) rook.setIsFirstTurn(false);
                     break;
                 case 'P':
-                    (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] as Pawn).setIsFirstTurn(false);
+                    if (piece is Pawn pawn) pawn.setIsFirstTurn(false);
                     break;
             }
         }
@@ -963,14 +972,14 @@ namespace System
     }
     class ChessPiece
     {
-        ChessGame MathmaticFuncsRunner = null;
+        ChessGame? MathmaticFuncsRunner;
         bool isWhite;
         char name = 'T';
         public ChessPiece(bool isWhite)
         {
             setIsWhite(isWhite);
         }
-        public virtual bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public virtual bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             Console.WriteLine("this is not valid piece");
             return false;
@@ -993,7 +1002,7 @@ namespace System
         { this.name = name; return true; }
         #endregion chess piece realated
         public ChessGame getMathmaticFuncsRunner()
-        { return MathmaticFuncsRunner; }
+        { return MathmaticFuncsRunner!; }
         public bool setMathmaticFuncsRunner(ChessGame game)
         { MathmaticFuncsRunner = game; return true; }
     }
@@ -1007,7 +1016,7 @@ namespace System
         { return isFirstTurn; }
         public bool setIsFirstTurn(bool isFirstTurn)
         { this.isFirstTurn = isFirstTurn; return true; }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             if ((getMathmaticFuncsRunner().lengthOfVerticalVector() <= 1) &&  //king movment
                 ((getMathmaticFuncsRunner().lengthOfHorizontalVector() <= 1) || ((isFirstTurn) && (getMathmaticFuncsRunner().lengthOfHorizontalVector() == 2) && (getMathmaticFuncsRunner().lengthOfVerticalVector() == 0))))
@@ -1022,7 +1031,7 @@ namespace System
 
         public Queen(bool isWhite) : base(isWhite)
         { setName('Q'); }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
             if ((location.getLetterLocation() == toLocation.getLetterLocation()) || (location.getNumberLocation() == toLocation.getNumberLocation()) || ((getMathmaticFuncsRunner().lengthOfVerticalVector()) == (getMathmaticFuncsRunner().lengthOfHorizontalVector()))) //queen movment
             {
@@ -1040,7 +1049,7 @@ namespace System
         { return isFirstTurn; }
         public bool setIsFirstTurn(bool isFirstTurn)
         { this.isFirstTurn = isFirstTurn; return true; }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation) //rook movment
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation) //rook movment
         {
             if (((location.getLetterLocation() == toLocation.getLetterLocation()) || (location.getNumberLocation() == toLocation.getNumberLocation())))
             {
@@ -1053,7 +1062,7 @@ namespace System
     {
         public Bishop(bool isWhite) : base(isWhite)
         { setName('B'); }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
 
             if (getMathmaticFuncsRunner().lengthOfVerticalVector() == getMathmaticFuncsRunner().lengthOfHorizontalVector()) //bishop movment
@@ -1067,7 +1076,7 @@ namespace System
     {
         public Knight(bool isWhite) : base(isWhite)
         { setName('N'); }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)  //knight movment
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)  //knight movment
         {
             if ((getMathmaticFuncsRunner().lengthOfVerticalVector() == 2 && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 1) ||
                 (getMathmaticFuncsRunner().lengthOfVerticalVector() == 1 && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 2))
@@ -1082,7 +1091,7 @@ namespace System
         bool isFirstTurn = true;
         public Pawn(bool isWhite) : base(isWhite)
         { setName('P'); }
-        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation) //pawn movment
+        public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation) //pawn movment
         {
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) //normal mooveing + en passant
             {
@@ -1111,14 +1120,14 @@ namespace System
             return false;
         }
         #region promotion related funcs
-        public void isPromotionOption(Location toLocation, ChessPiece[,] playBoard)
+        public void isPromotionOption(Location toLocation, ChessPiece?[,] playBoard)
         {
             if ((this is Pawn) && (toLocation.getNumberLocation() == 8 || toLocation.getNumberLocation() == 1))
             {
                 promotion(toLocation, playBoard);
             }
         }
-        public void promotion(Location toLocation, ChessPiece[,] playBoard)
+        public void promotion(Location toLocation, ChessPiece?[,] playBoard)
         {
             bool PromotedPawnColor = this.getIsWhite();
             bool toEndLoop = false;
@@ -1129,7 +1138,7 @@ namespace System
                     "\npress R to promote it to a Rook" +
                     "\npress B to promote it to a Bishop" +
                     "\npress N to promote it to a knight");
-                string input = Console.ReadLine();
+                string input = Console.ReadLine() ?? "";
                 input = input.Trim();
                 input = input.ToUpper();
                 if (inputChek(input))
@@ -1149,7 +1158,8 @@ namespace System
                             playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new Knight(PromotedPawnColor);
                             break;
                     }
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()].setMathmaticFuncsRunner(getMathmaticFuncsRunner());
+                    ChessPiece? promotedPiece = playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()];
+                    promotedPiece!.setMathmaticFuncsRunner(getMathmaticFuncsRunner());
                     toEndLoop = true;
                 }
             } while (!toEndLoop);
