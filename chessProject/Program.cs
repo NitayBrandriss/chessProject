@@ -22,7 +22,6 @@ namespace System
         Location BlackKingLocation = new Location(1, 5), WhiteKingLocation = new Location(8, 5);
         int fiftyMovesRuleCountTo100moves;
         string boardString = "";
-        Location location = new Location(1, 1), toLocation = new Location(1, 1);
         public void startGame()
         {
             string input;
@@ -42,35 +41,37 @@ namespace System
                 }
                 if (input != "DRAW")
                 {
+                    Location from;
+                    Location to;
                     if (inputChek(input))
                     {
-                        location = new Location(numberToCurrectNumber(input, 1), letterToNumber(input, 0));
-                        toLocation = new Location(numberToCurrectNumber(input, 3), letterToNumber(input, 2));
+                        from = new Location(numberToCurrectNumber(input, 1), letterToNumber(input, 0));
+                        to = new Location(numberToCurrectNumber(input, 3), letterToNumber(input, 2));
                     }
                     else
                     {
                         continue;
                     }
 
-                    if ((board[location.getNumberLocation(), location.getLetterLocation()] != null) && isMoveLegal(location, toLocation, board, lastMoveEarlyLocation, lastMoveFinalLocation, true))
+                    if ((board[from.getNumberLocation(), from.getLetterLocation()] != null) && isMoveLegal(from, to, board, lastMoveEarlyLocation, lastMoveFinalLocation, true))
                     {
-                        if (isItCastling(location, toLocation, board) &&
-                            isCastlingValid(location, toLocation, board, lastMoveEarlyLocation, lastMoveFinalLocation))
+                        if (isItCastling(from, to, board) &&
+                            isCastlingValid(from, to, board, lastMoveEarlyLocation, lastMoveFinalLocation))
                         {
-                            doTheCastling(location, toLocation, board);
+                            doTheCastling(from, to, board);
                         }
-                        else if (isItEnPassant(location, toLocation, board))
+                        else if (isItEnPassant(from, to, board))
                         {
-                            doTheEnPassant(location, toLocation, board);
+                            doTheEnPassant(from, to, board);
                         }
                         else
                         {
-                            update50MovesRuleCount(board, location, toLocation);
-                            doTheMove(location, toLocation, board);
+                            update50MovesRuleCount(board, from, to);
+                            doTheMove(from, to, board);
                         }
                         printBoard(board);
 
-                        endFirstTurn(toLocation, board);
+                        endFirstTurn(to, board);
                     }
                     else
                     {
@@ -78,7 +79,7 @@ namespace System
                         continue;
                     }
 
-                    afterTurnCheksAndEffects(location, toLocation, board, lastMoveEarlyLocation, lastMoveFinalLocation);
+                    afterTurnCheksAndEffects(from, to, board, lastMoveEarlyLocation, lastMoveFinalLocation);
                 }
 
                 else if (input == "DRAW")
@@ -480,31 +481,31 @@ namespace System
         #region move ligalitty
         #region calculation of diraction by the difrence beteween the location and destenation
         #region left&right
-        public int newLetterLocationMinusCurrentLetterLocation()
+        public int newLetterLocationMinusCurrentLetterLocation(Location from, Location to)
         {
-            return toLocation.getLetterLocation() - location.getLetterLocation();
+            return to.getLetterLocation() - from.getLetterLocation();
         }
-        public bool isHorizontalVectorToTheRight()
+        public bool isHorizontalVectorToTheRight(Location from, Location to)
         {
-            return newLetterLocationMinusCurrentLetterLocation() > 0;
+            return newLetterLocationMinusCurrentLetterLocation(from, to) > 0;
         }
-        public int lengthOfHorizontalVector()
+        public int lengthOfHorizontalVector(Location from, Location to)
         {
-            return Math.Abs(newLetterLocationMinusCurrentLetterLocation());
+            return Math.Abs(newLetterLocationMinusCurrentLetterLocation(from, to));
         }
         #endregion left&right
         #region up&down
-        public int newNumberLocationMinusCurrentNumberLocation()
+        public int newNumberLocationMinusCurrentNumberLocation(Location from, Location to)
         {
-            return toLocation.getNumberLocation() - location.getNumberLocation();
+            return to.getNumberLocation() - from.getNumberLocation();
         }
-        public bool isVerticalVectorPointingDown()
+        public bool isVerticalVectorPointingDown(Location from, Location to)
         {
-            return newNumberLocationMinusCurrentNumberLocation() > 0;
+            return newNumberLocationMinusCurrentNumberLocation(from, to) > 0;
         }
-        public int lengthOfVerticalVector()
+        public int lengthOfVerticalVector(Location from, Location to)
         {
-            return Math.Abs(newNumberLocationMinusCurrentNumberLocation());
+            return Math.Abs(newNumberLocationMinusCurrentNumberLocation(from, to));
         }
 
         #endregion up&down
@@ -521,9 +522,6 @@ namespace System
         #endregion calculation of diraction by the difrence beteween the location and destenation
         public bool isMoveLegal(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation, bool isNeededToChekIfKingThreatenedAfterMovement) // will have more conditions
         {
-            this.location = location;
-            this.toLocation = toLocation;
-
             ChessPiece? movingPiece = playBoard[location.getNumberLocation(), location.getLetterLocation()];
             if (movingPiece == null)
                 return false;
@@ -531,7 +529,7 @@ namespace System
             if (movingPiece.getIsWhite() == getIsWhiteTurn() &&
                 (location.getNumberLocation() != toLocation.getNumberLocation() || location.getLetterLocation() != toLocation.getLetterLocation()) &&
                 movingPiece.ChekMovmentValid(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) &&
-                ChekMovementEatingRightColor(toLocation, playBoard) &&
+                ChekMovementEatingRightColor(location, toLocation, playBoard) &&
                 ChekIsClearPath(location, toLocation, playBoard) &&
                 (isNeededToChekIfKingThreatenedAfterMovement ? ((isKingThreatenedAfterMovement(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation)) == false) : true))
             {
@@ -548,7 +546,7 @@ namespace System
         }
         public bool isItEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
-            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) && (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) && ((lengthOfHorizontalVector()) == 1))
+            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) && (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) && (lengthOfHorizontalVector(location, toLocation) == 1))
                 return true;
             return false;
         }
@@ -560,7 +558,7 @@ namespace System
         }
         public bool isItCastling(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
-            if (playBoard[location.getNumberLocation(), location.getLetterLocation()] is King && (lengthOfHorizontalVector()) == 2)
+            if (playBoard[location.getNumberLocation(), location.getLetterLocation()] is King && lengthOfHorizontalVector(location, toLocation) == 2)
             {
                 return true;
             }
@@ -568,14 +566,14 @@ namespace System
         }
         public bool isCastlingValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            Location castlingKingMidMovementSquare = new Location(location.getNumberLocation(), location.getLetterLocation() + (isHorizontalVectorToTheRight() ? 1 : -1));
-            Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1);
+            Location castlingKingMidMovementSquare = new Location(location.getNumberLocation(), location.getLetterLocation() + (isHorizontalVectorToTheRight(location, toLocation) ? 1 : -1));
+            Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight(location, toLocation) ? 8 : 1);
             if ((isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
                 (isThreatenedPlace(toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
                 (isThreatenedPlace(castlingKingMidMovementSquare, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation) == false) &&
                 (ChekIsClearPath(location, CastlingRookLocation, playBoard) == true))
             {
-                if ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1] is Rook castlingRook) &&
+                if ((playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight(location, toLocation) ? 8 : 1] is Rook castlingRook) &&
                     castlingRook.getIsFirstTurn())
                 {
                     return true;
@@ -587,17 +585,17 @@ namespace System
         }
         public void doTheCastling(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
-            Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 8 : 1);
-            Location CastlingRookDestination = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight() ? 6 : 4);
+            Location CastlingRookLocation = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight(location, toLocation) ? 8 : 1);
+            Location CastlingRookDestination = new Location(location.getNumberLocation(), isHorizontalVectorToTheRight(location, toLocation) ? 6 : 4);
             update50MovesRuleCount(playBoard, location, toLocation);
             doTheMove(location, toLocation, playBoard);
             doTheMove(CastlingRookLocation, CastlingRookDestination, playBoard);
-            if (playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight() ? 6 : 4] is Rook castledRook)
+            if (playBoard[location.getNumberLocation(), isHorizontalVectorToTheRight(location, toLocation) ? 6 : 4] is Rook castledRook)
                 castledRook.setIsFirstTurn(false);
         }
         public bool ChekIsClearPath(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
-            if ((isVerticalVectorPointingDown() == false) && lengthOfHorizontalVector() == 0) //up up
+            if ((isVerticalVectorPointingDown(location, toLocation) == false) && lengthOfHorizontalVector(location, toLocation) == 0) //up up
             {
                 for (int i = (location.getNumberLocation() - 1); i > toLocation.getNumberLocation(); i--)
                 {
@@ -605,7 +603,7 @@ namespace System
                         return false;
                 }
             }
-            else if (isVerticalVectorPointingDown() && lengthOfHorizontalVector() == 0) //down down
+            else if (isVerticalVectorPointingDown(location, toLocation) && lengthOfHorizontalVector(location, toLocation) == 0) //down down
             {
                 for (int i = (location.getNumberLocation() + 1); i < toLocation.getNumberLocation(); i++)
                 {
@@ -613,7 +611,7 @@ namespace System
                         return false;
                 }
             }
-            else if (lengthOfVerticalVector() == 0 && isHorizontalVectorToTheRight()) //right right
+            else if (lengthOfVerticalVector(location, toLocation) == 0 && isHorizontalVectorToTheRight(location, toLocation)) //right right
             {
                 for (int i = (location.getLetterLocation() + 1); i < toLocation.getLetterLocation(); i++)
                 {
@@ -621,7 +619,7 @@ namespace System
                         return false;
                 }
             }
-            else if (lengthOfVerticalVector() == 0 && (isHorizontalVectorToTheRight() == false)) //left left
+            else if (lengthOfVerticalVector(location, toLocation) == 0 && (isHorizontalVectorToTheRight(location, toLocation) == false)) //left left
             {
                 for (int i = (location.getLetterLocation() - 1); i > toLocation.getLetterLocation(); i--)
                 {
@@ -629,7 +627,7 @@ namespace System
                         return false;
                 }
             }
-            else if ((isVerticalVectorPointingDown() == false) && (isHorizontalVectorToTheRight() == false))//up left
+            else if ((isVerticalVectorPointingDown(location, toLocation) == false) && (isHorizontalVectorToTheRight(location, toLocation) == false))//up left
             {
                 for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() - 1); (i > toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i--, j--)
                 {
@@ -637,7 +635,7 @@ namespace System
                         return false;
                 }
             }
-            else if ((isVerticalVectorPointingDown() == false) && isHorizontalVectorToTheRight())//up right
+            else if ((isVerticalVectorPointingDown(location, toLocation) == false) && isHorizontalVectorToTheRight(location, toLocation))//up right
             {
                 for (int i = (location.getNumberLocation() - 1), j = (location.getLetterLocation() + 1); (i > toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i--, j++)
                 {
@@ -646,7 +644,7 @@ namespace System
                 }
 
             }
-            else if (isVerticalVectorPointingDown() && (isHorizontalVectorToTheRight() == false))//down left
+            else if (isVerticalVectorPointingDown(location, toLocation) && (isHorizontalVectorToTheRight(location, toLocation) == false))//down left
             {
                 for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() - 1); (i < toLocation.getNumberLocation()) && (j > toLocation.getLetterLocation()); i++, j--)
                 {
@@ -654,7 +652,7 @@ namespace System
                         return false;
                 }
             }
-            else if (isVerticalVectorPointingDown() && isHorizontalVectorToTheRight())//down right
+            else if (isVerticalVectorPointingDown(location, toLocation) && isHorizontalVectorToTheRight(location, toLocation))//down right
             {
                 for (int i = (location.getNumberLocation() + 1), j = (location.getLetterLocation() + 1); (i < toLocation.getNumberLocation()) && (j < toLocation.getLetterLocation()); i++, j++)
                 {
@@ -664,11 +662,11 @@ namespace System
             }
             return true;
         }
-        public bool ChekMovementEatingRightColor(Location toLocation, ChessPiece?[,] playBoard) //no knibalism
+        public bool ChekMovementEatingRightColor(Location location, Location toLocation, ChessPiece?[,] playBoard) //no knibalism
         {
             bool result = true;
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null)
-                result = (playBoard[this.location.getNumberLocation(), this.location.getLetterLocation()]!.getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()]!.getIsWhite() ? true : false);
+                result = (playBoard[location.getNumberLocation(), location.getLetterLocation()]!.getIsWhite() != playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()]!.getIsWhite() ? true : false);
 
             return result;
         }
@@ -1018,8 +1016,8 @@ namespace System
         { this.isFirstTurn = isFirstTurn; return true; }
         public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            if ((getMathmaticFuncsRunner().lengthOfVerticalVector() <= 1) &&  //king movment
-                ((getMathmaticFuncsRunner().lengthOfHorizontalVector() <= 1) || ((isFirstTurn) && (getMathmaticFuncsRunner().lengthOfHorizontalVector() == 2) && (getMathmaticFuncsRunner().lengthOfVerticalVector() == 0))))
+            if ((getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) <= 1) &&  //king movment
+                ((getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) <= 1) || ((isFirstTurn) && (getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 2) && (getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 0))))
             {
                 return true;
             }
@@ -1033,7 +1031,7 @@ namespace System
         { setName('Q'); }
         public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            if ((location.getLetterLocation() == toLocation.getLetterLocation()) || (location.getNumberLocation() == toLocation.getNumberLocation()) || ((getMathmaticFuncsRunner().lengthOfVerticalVector()) == (getMathmaticFuncsRunner().lengthOfHorizontalVector()))) //queen movment
+            if ((location.getLetterLocation() == toLocation.getLetterLocation()) || (location.getNumberLocation() == toLocation.getNumberLocation()) || ((getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation)) == (getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation)))) //queen movment
             {
                 return true;
             }
@@ -1065,7 +1063,7 @@ namespace System
         public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
 
-            if (getMathmaticFuncsRunner().lengthOfVerticalVector() == getMathmaticFuncsRunner().lengthOfHorizontalVector()) //bishop movment
+            if (getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation)) //bishop movment
             {
                 return true;
             }
@@ -1078,8 +1076,8 @@ namespace System
         { setName('N'); }
         public override bool ChekMovmentValid(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)  //knight movment
         {
-            if ((getMathmaticFuncsRunner().lengthOfVerticalVector() == 2 && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 1) ||
-                (getMathmaticFuncsRunner().lengthOfVerticalVector() == 1 && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 2))
+            if ((getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 2 && getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 1) ||
+                (getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 1 && getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 2))
             {
                 return true;
             }
@@ -1095,14 +1093,14 @@ namespace System
         {
             if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) //normal mooveing + en passant
             {
-                if (isValidVerticalDiraction() && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 0 &&
-                    ((getMathmaticFuncsRunner().lengthOfVerticalVector() == 1) ||
-                     (getIsFirstTurn() && getMathmaticFuncsRunner().lengthOfVerticalVector() == 2 &&
+                if (isValidVerticalDiraction(location, toLocation) && getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 0 &&
+                    ((getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 1) ||
+                     (getIsFirstTurn() && getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 2 &&
                       location.getNumberLocation() == (getIsWhite() ? 7 : 2))))
                 {
                     return true;
                 }
-                else if ((location.getNumberLocation() == (getIsWhite() ? 4 : 5)) && (toLocation.getNumberLocation() == (getIsWhite() ? 3 : 6)) && ((getMathmaticFuncsRunner().lengthOfHorizontalVector()) == 1) && //eater side
+                else if ((location.getNumberLocation() == (getIsWhite() ? 4 : 5)) && (toLocation.getNumberLocation() == (getIsWhite() ? 3 : 6)) && (getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 1) && //eater side
                         (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] is Pawn) && //eaten side
                         (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] == playBoard[location.getNumberLocation(), toLocation.getLetterLocation()]) &&
                         (getMathmaticFuncsRunner().lastMoveLengthOfVerticalVector() == 2))
@@ -1112,7 +1110,7 @@ namespace System
             }
             else if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null) // normal eating
             {
-                if (isValidVerticalDiraction() && getMathmaticFuncsRunner().lengthOfVerticalVector() == 1 && getMathmaticFuncsRunner().lengthOfHorizontalVector() == 1)
+                if (isValidVerticalDiraction(location, toLocation) && getMathmaticFuncsRunner().lengthOfVerticalVector(location, toLocation) == 1 && getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 1)
                 {
                     return true;
                 }
@@ -1195,9 +1193,9 @@ namespace System
         { return isFirstTurn; }
         public bool setIsFirstTurn(bool isFirstTurn)
         { this.isFirstTurn = isFirstTurn; return true; }
-        public bool isValidVerticalDiraction()
+        public bool isValidVerticalDiraction(Location location, Location toLocation)
         {
-            return getMathmaticFuncsRunner().isVerticalVectorPointingDown() == (getIsWhite() ? false : true);
+            return getMathmaticFuncsRunner().isVerticalVectorPointingDown(location, toLocation) == (getIsWhite() ? false : true);
         }
     }
 }
