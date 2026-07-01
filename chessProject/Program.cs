@@ -721,7 +721,7 @@ namespace System
         {
             bool result;
             ChessPiece? KingObgectHolder;
-            Location KingLocation = thisTurnColorKingLocation();
+            Location KingLocation = findKingLocation(getIsWhiteTurn(), playBoard);
             KingObgectHolder = playBoard[KingLocation.getNumberLocation(), KingLocation.getLetterLocation()];
             playBoard[KingLocation.getNumberLocation(), KingLocation.getLetterLocation()] = null;
             result = isThreatenedPlace(KingLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
@@ -769,6 +769,18 @@ namespace System
             {
                 isWhiteTurn = savedTurn;
             }
+        }
+        public Location findKingLocation(bool isWhite, ChessPiece?[,] playBoard)
+        {
+            for (int i = 1; i < playBoard.GetLength(0); i++)
+            {
+                for (int j = 1; j < playBoard.GetLength(1); j++)
+                {
+                    if (playBoard[i, j] is King king && king.getIsWhite() == isWhite)
+                        return new Location(i, j);
+                }
+            }
+            return isWhite ? WhiteKingLocation : BlackKingLocation;
         }
         public Location thisTurnColorKingLocation()
         {
