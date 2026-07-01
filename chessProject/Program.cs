@@ -60,7 +60,7 @@ namespace System
                         {
                             doTheCastling(from, to, board);
                         }
-                        else if (isItEnPassant(from, to, board))
+                        else if (isItEnPassant(from, to, board, lastMoveEarlyLocation, lastMoveFinalLocation))
                         {
                             doTheEnPassant(from, to, board);
                         }
@@ -544,11 +544,30 @@ namespace System
             }
             return false;
         }
-        public bool isItEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard)
+        public bool isEnPassantMove(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            if ((playBoard[location.getNumberLocation(), location.getLetterLocation()] is Pawn) && (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null) && (lengthOfHorizontalVector(location, toLocation) == 1))
-                return true;
-            return false;
+            if (playBoard[location.getNumberLocation(), location.getLetterLocation()] is not Pawn pawn)
+                return false;
+            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] != null)
+                return false;
+            if (lengthOfHorizontalVector(location, toLocation) != 1)
+                return false;
+            if (location.getNumberLocation() != (pawn.getIsWhite() ? 4 : 5))
+                return false;
+            if (toLocation.getNumberLocation() != (pawn.getIsWhite() ? 3 : 6))
+                return false;
+            if (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] is not Pawn)
+                return false;
+            if (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] !=
+                playBoard[location.getNumberLocation(), toLocation.getLetterLocation()])
+                return false;
+            if (lastMoveLengthOfVerticalVector() != 2)
+                return false;
+            return true;
+        }
+        public bool isItEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
+        {
+            return isEnPassantMove(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
         }
         public void doTheEnPassant(Location location, Location toLocation, ChessPiece?[,] playBoard)
         {
@@ -768,7 +787,8 @@ namespace System
         #endregion threat related funcs
         public void afterTurnCheksAndEffects(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] is Pawn promotedPawn)
+            if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] is Pawn promotedPawn &&
+                (toLocation.getNumberLocation() == 8 || toLocation.getNumberLocation() == 1))
             {
                 promotedPawn.isPromotionOption(toLocation, playBoard);
                 printBoard(playBoard);
@@ -1106,10 +1126,7 @@ namespace System
                 {
                     return true;
                 }
-                else if ((location.getNumberLocation() == (getIsWhite() ? 4 : 5)) && (toLocation.getNumberLocation() == (getIsWhite() ? 3 : 6)) && (getMathmaticFuncsRunner().lengthOfHorizontalVector(location, toLocation) == 1) && //eater side
-                        (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] is Pawn) && //eaten side
-                        (playBoard[lastMoveFinalLocation.getNumberLocation(), lastMoveFinalLocation.getLetterLocation()] == playBoard[location.getNumberLocation(), toLocation.getLetterLocation()]) &&
-                        (getMathmaticFuncsRunner().lastMoveLengthOfVerticalVector() == 2))
+                else if (getMathmaticFuncsRunner().isEnPassantMove(location, toLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation))
                 {
                     return true;
                 }
