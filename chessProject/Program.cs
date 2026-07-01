@@ -680,24 +680,22 @@ namespace System
         #region threat related funcs
         public bool isKingThreatenedAfterMovement(Location location, Location toLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            bool result = false;
-            ChessPiece? movingPieceHolder = playBoard[location.getNumberLocation(), location.getLetterLocation()]; //move the piece and chek the king
-            {
-                playBoard[location.getNumberLocation(), location.getLetterLocation()] = null;//last change
-                if (playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] == null)
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = new ChessPiece(getIsWhiteTurn());
-                else
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()]!.setIsWhite(getIsWhiteTurn());
-            }
-            result = isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
-            {
-                playBoard[location.getNumberLocation(), location.getLetterLocation()] = movingPieceHolder;
-                ChessPiece? simulatedDest = playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()];
-                if (simulatedDest!.getName() == 'T')
-                    playBoard[toLocation.getNumberLocation(), toLocation.getLetterLocation()] = null;
-                else
-                    simulatedDest.setIsWhite(!(getIsWhiteTurn()));
-            }
+            int fromRow = location.getNumberLocation();
+            int fromCol = location.getLetterLocation();
+            int toRow = toLocation.getNumberLocation();
+            int toCol = toLocation.getLetterLocation();
+
+            ChessPiece? sourceCell = playBoard[fromRow, fromCol];
+            ChessPiece? destCell = playBoard[toRow, toCol];
+
+            playBoard[fromRow, fromCol] = null;
+            playBoard[toRow, toCol] = sourceCell;
+
+            bool result = isKingThreatened(playBoard, lastMoveEarlyLocation, lastMoveFinalLocation);
+
+            playBoard[fromRow, fromCol] = sourceCell;
+            playBoard[toRow, toCol] = destCell;
+
             return result;
         }
         public bool isKingThreatened(ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
@@ -714,36 +712,44 @@ namespace System
         }
         public bool isThreatenedPlace(Location placeLocation, ChessPiece?[,] playBoard, Location lastMoveEarlyLocation, Location lastMoveFinalLocation)
         {
-            for (int i = 1; i < playBoard.GetLength(0); i++)
+            bool savedTurn = isWhiteTurn;
+            try
             {
-                for (int j = 1; j < playBoard.GetLength(1); j++)
+                for (int i = 1; i < playBoard.GetLength(0); i++)
                 {
-                    if ((playBoard[i, j] != null) && (playBoard[i, j]!.getIsWhite() != getIsWhiteTurn()))
+                    for (int j = 1; j < playBoard.GetLength(1); j++)
                     {
-                        Location potentialTrheatingPieceLocation = new Location(i, j);
-                        ChessPiece? chessPieceHolder = playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()];
-                        if (playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] == null)
+                        if ((playBoard[i, j] != null) && (playBoard[i, j]!.getIsWhite() != getIsWhiteTurn()))
                         {
-                            playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = new ChessPiece(getIsWhiteTurn());
-                        }
-                        else
-                        {
-                            playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()]!.setIsWhite(getIsWhiteTurn());
-                        }
-                        changeTurn();
-                        if (isMoveLegal(potentialTrheatingPieceLocation, placeLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation, false) == true)
-                        {//if threatend
+                            Location potentialTrheatingPieceLocation = new Location(i, j);
+                            ChessPiece? chessPieceHolder = playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()];
+                            if (playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] == null)
+                            {
+                                playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = new ChessPiece(getIsWhiteTurn());
+                            }
+                            else
+                            {
+                                playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()]!.setIsWhite(getIsWhiteTurn());
+                            }
+                            changeTurn();
+                            if (isMoveLegal(potentialTrheatingPieceLocation, placeLocation, playBoard, lastMoveEarlyLocation, lastMoveFinalLocation, false) == true)
+                            {//if threatend
+                                playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = chessPieceHolder;
+                                changeTurn();
+                                return true;
+                            }
                             playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = chessPieceHolder;
                             changeTurn();
-                            return true;
                         }
-                        playBoard[placeLocation.getNumberLocation(), placeLocation.getLetterLocation()] = chessPieceHolder;
-                        changeTurn();
                     }
                 }
-            }
 
-            return false;
+                return false;
+            }
+            finally
+            {
+                isWhiteTurn = savedTurn;
+            }
         }
         public Location thisTurnColorKingLocation()
         {
